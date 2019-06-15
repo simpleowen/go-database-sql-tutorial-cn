@@ -19,4 +19,4 @@
 - 使用未知列
 - [连接池](connection-pool.md)
 - 惊喜，反模式和限制
-- 相关阅读和资源
+- [相关阅读和资源](references.md)
