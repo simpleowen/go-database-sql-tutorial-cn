@@ -14,7 +14,7 @@
 - 检索结果集
 - 修改数据和使用事务
 - [使用预处理语句](prepared.md)
-- 错误处理
+- [错误处理](errors.md)
 - 使用 NULL 值
 - [使用未知列](unknown_columns.md)
 - [连接池](connection-pool.md)
