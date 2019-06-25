@@ -18,5 +18,5 @@
 - 使用 NULL 值
 - [使用未知列](unknown_columns.md)
 - [连接池](connection-pool.md)
-- 惊喜，反模式和限制
+- [惊喜，反模式和限制](suprise.md)
 - [相关阅读和资源](references.md)
