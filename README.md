@@ -11,7 +11,7 @@
 - [概览](overview.md)
 - [导入数据库驱动](database_driver.md)
 - [访问数据库](accessing.md)
-- 检索结果集
+- [检索结果集](retrieving.md)
 - 修改数据和使用事务
 - [使用预处理语句](prepared.md)
 - [错误处理](errors.md)
