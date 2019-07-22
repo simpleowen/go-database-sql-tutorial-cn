@@ -74,10 +74,21 @@ A couple parts of this are easy to get wrong, and can have bad consequences.
 一些过程很容易出现异常, 可能导致不好的结果.
 
 You should always check for an error at the end of the for rows.Next() loop. If there’s an error during the loop, you need to know about it. Don’t just assume that the loop iterates until you’ve processed all the rows.
+
+rows.Next() 循环结尾处, 你应该总是检查异常. 你需要知道在循环期间是否发生了异常, 不要只是假设循环会处理所有行.
+
 Second, as long as there’s an open result set (represented by rows), the underlying connection is busy and can’t be used for any other query. That means it’s not available in the connection pool. If you iterate over all of the rows with rows.Next(), eventually you’ll read the last row, and rows.Next() will encounter an internal EOF error and call rows.Close() for you. But if for some reason you exit that loop – an early return, or so on – then the rows doesn’t get closed, and the connection remains open. (It is auto-closed if rows.Next() returns false due to an error, though). This is an easy way to run out of resources.
+
+第二, 只要存在一个结果集, 底层连接就是忙碌状态,并且不能被其他查询语句使用. 这意味着在连接池中它是不可用的. 使用 rows.Next() 遍历完所有行后, 最终你会读取最后一行, rows.Next() 将会遇到内部 EOF 错误, 并且为你调用 rows.Close(). 如果由于某些原因你提前退出了循环, rows 将不会被关闭, 连接也是打开状态(如果 rows.Next() 因为异常返回false, 它将被自动关闭). 这是一个耗尽资源的简易方法.
+
 rows.Close() is a harmless no-op if it’s already closed, so you can call it multiple times. Notice, however, that we check the error first, and only call rows.Close() if there isn’t an error, in order to avoid a runtime panic.
+
+就算rows 已经关闭了, rows.Close() 也是一个无害的无操作, 所以你可以多次调用它. 尽管如此, 也要注意, 为了避免运行时错误, 确认没有异常发生后再调用 rows.Close().
+
 You should always defer rows.Close(), even if you also call rows.Close() explicitly at the end of the loop, which isn’t a bad idea.
 Don’t defer within a loop. A deferred statement doesn’t get executed until the function exits, so a long-running function shouldn’t use it. If you do, you will slowly accumulate memory. If you are repeatedly querying and consuming result sets within a loop, you should explicitly call rows.Close() when you’re done with each result, and not use defer.
+
+你应该总是使用 defer rows.Close(), 即使你在循环结尾处显示调用了 rows.Close(), 不要在循环内部 defer. defer 语句在函数退出时才会被执行, 所以不应该在一个长时间运行的函数里使用它. 如果你这么做了, 你将慢慢地耗费内存. 如果你在循环内部重复检索和使用结果集, 你应该在取出每个结果后显式调用 rows.Close(), 而不是使用 defer.
 
 How Scan() Works
 
@@ -95,7 +106,12 @@ Preparing Queries
 
 You should, in general, always prepare queries to be used multiple times. The result of preparing the query is a prepared statement, which can have placeholders (a.k.a. bind values) for parameters that you’ll provide when you execute the statement. This is much better than concatenating strings, for all the usual reasons (avoiding SQL injection attacks, for example).
 
+对于需要多次执行的查询, 通常你应该总是进行预处理. 对查询进行预处理的结果是产生一条提供占位符的预处理语句. 这比连接字符串好多了
+
 In MySQL, the parameter placeholder is ?, and in PostgreSQL it is $N, where N is a number. SQLite accepts either of these. In Oracle placeholders begin with a colon and are named, like :param1. We’ll use ? because we’re using MySQL as our example.
+
+MySQL 中, 参数占位符使用 `?`, PostgreSQL中是$N, N代表一个数字. SQLite 接受两种形式. Oracle中占位符以一个冒号开始, 后跟参数名, 像 `:param1`. 我们将在使用 MySQL 中的例子中使用 `?`.
+
 
 ```go
 stmt, err := db.Prepare("select id, name from users where id = ?")
