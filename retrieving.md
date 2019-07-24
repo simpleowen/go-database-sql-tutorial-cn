@@ -96,9 +96,15 @@ How Scan() Works
 
 When you iterate over rows and scan them into destination variables, Go performs data type conversions work for you, behind the scenes. It is based on the type of the destination variable. Being aware of this can clean up your code and help avoid repetitive work.
 
+当你遍历行并将它们扫描进目标变量时, Go 会在后台帮你执行数据类型转换. 它基于目标变量的类型, 意识到这点能让你的代码变得清爽, 并避免重复性工作.
+
 For example, suppose you select some rows from a table that is defined with string columns, such as VARCHAR(45) or similar. You happen to know, however, that the table always contains numbers. If you pass a pointer to a string, Go will copy the bytes into the string. Now you can use strconv.ParseInt() or similar to convert the value to a number. You’ll have to check for errors in the SQL operations, as well as errors parsing the integer. This is messy and tedious.
 
+例如, 假设你从表中查询了一些字符串数据, VARCHAR(45) 或相似类型. 但是你恰好知道该表总是包含数值数据. 如果你传递一个指针给一个字符串, Go 将会复制字节到字符串中. 现在你可以使用 strconv.ParseInt() 或将值转换数值. 你必须检查 SQL 操作中和整型转换的错误. 这是麻烦和乏味的.
+
 Or, you can just pass Scan() a pointer to an integer. Go will detect that and call strconv.ParseInt() for you. If there’s an error in conversion, the call to Scan() will return it. Your code is neater and smaller now. This is the recommended way to use database/sql.
+
+或者, 你只传递一个整型指针给 Scan(). Go 将为你检测并调用 strconv.ParseInt(). 如果在转换中发生了异常, Scan() 将会返回它. 你的代码现在变得更简洁, 这是推荐使用 database/sql 包的方式.
 
 Preparing Queries
 
@@ -134,6 +140,8 @@ if err = rows.Err(); err != nil {
 
 Under the hood, db.Query() actually prepares, executes, and closes a prepared statement. That’s three round-trips to the database. If you’re not careful, you can triple the number of database interactions your application makes! Some drivers can avoid this in specific cases, but not all drivers do. See prepared statements for more.
 
+在底层, `db.Query()` 实际上包含 `预处理`, `执行`, `关闭` 等操作. 这是到数据库的三次往返操作. 如果你不注意, 应用程序与数据库的交互次数可能增加 3 倍. 某些驱动在特定情况下能避免发送这种情形, 但不是每个驱动都能做到, 详情见 `预处理语句` 一节.
+
 Single-Row Queries
 
 ## 单行查询
@@ -152,6 +160,8 @@ fmt.Println(name)
 ```
 
 Errors from the query are deferred until Scan() is called, and then are returned from that. You can also call QueryRow() on a prepared statement:
+
+检索数据产生的错误直到调用 Scan()时, 才能检测并返回. 你也可以在一个预处理语句中调用 QueryRow().
 
 ```go
 stmt, err := db.Prepare("select name from users where id = ?")
