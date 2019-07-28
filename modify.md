@@ -1,14 +1,10 @@
 # 修改数据, 使用事务
 
-Now we’re ready to see how to modify data and work with transactions. The distinction might seem artificial if you’re used to programming languages that use a “statement” object for fetching rows as well as updating data, but in Go, there’s an important reason for the difference.
-
-现在你已经准备好了解如何修改数据和处理事务. 如果你习惯于编写使用 `语句` 对象来获取行以及更新数据的编程语言，那么区别似乎是假的，但在Go中，存在差异的重要原因.
+现在我们已经准备好了解如何修改数据和处理事务. 如果你习惯于编写使用`语句`对象来获取行以及更新数据的语言，那么区别似乎是假的，但在Go中，存在差异的重要原因.
 
 ## 修改数据的语句
 
-Use Exec(), preferably with a prepared statement, to accomplish an INSERT, UPDATE, DELETE, or another statement that doesn’t return rows. The following example shows how to insert a row and inspect metadata about the operation:
-
-使用 Exec(), 最好配合预处理语句来完成诸如 `INSERT`, `UPDATE`, `DELETE` 等不需要返回行的任务. 下面的例子展示了如何插入一条语句并获取操作元数据:
+使用 Exec(), 最好配合预处理语句来完成诸如 `INSERT`, `UPDATE`, `DELETE` 等不需要返回行的任务. 下面的例子展示了如何插入一条语句并获取相关操作的元数据:
 
 ```go
 stmt, err := db.Prepare("INSERT INTO users(name) VALUES(?)")
@@ -30,47 +26,37 @@ if err != nil {
 log.Printf("ID = %d, affected = %d\n", lastId, rowCnt)
 ```
 
-Executing the statement produces a sql.Result that gives access to statement metadata: the last inserted ID and the number of rows affected.
+执行 `Exec()` 后返回了一个 `sql.Result` 对象, 它提供对语句元数据的访问, 包括最后一行的 ID 和此次操作影响的行数.
 
-执行 Exec() 后返回了一个 sql.Result 对象, 它有权访问语句的元数据, 包括最后一行的 ID 和此次操作影响的行数.
-
-What if you don’t care about the result? What if you just want to execute a statement and check if there were any errors, but ignore the result? Wouldn’t the following two statements do the same thing?
-
-如果你并不关心结果怎么办? 如果你只想执行一条语句并检查是否产生异常而不想知道执行结果怎么办? 以下两条语句不会做同样的事情吗?
+然而如果你并不关心执行结果怎么办? 如果你只想执行一条语句并检查是否产生异常而不想知道执行结果怎么办? 以下两条语句不会做同样的事情吗?
 
 ```go
 _, err := db.Exec("DELETE FROM users")  // OK
 _, err := db.Query("DELETE FROM users") // BAD
 ```
 
-The answer is no. They do not do the same thing, and you should never use Query() like this. The Query() will return a sql.Rows, which reserves a database connection until the sql.Rows is closed. Since there might be unread data (e.g. more data rows), the connection can not be used. In the example above, the connection will never be released again. The garbage collector will eventually close the underlying net.Conn for you, but this might take a long time. Moreover the database/sql package keeps tracking the connection in its pool, hoping that you release it at some point, so that the connection can be used again. This anti-pattern is therefore a good way to run out of resources (too many connections, for example).
-
-答案是否. 它们不是做同一件事, 你永远也不要像这样使用 Query(). Query() 会返回一个 sql.Rows 对象, 它保存着一个与数据库的连接直到 sql.Rows 并关闭. 由于可能存在未读数据(如, 更多的行), 无法使用此连接. 上面这个例子中, 连接永远也不会被再次释放. 当然垃圾回收机制最终会帮你关闭底层 net.Conn, 但可能耗时较长. 此外, database/sql 包会一直跟踪池中的连接, 希望你会在某个时刻释放它, 以便重复利用该连接. 因此这种反模式是耗尽资源的一个好方法(比如, 太多的连接数).
-
-Working with Transactions
+答案是否. 它们不是做同一件事, 你永远也不要像这样使用 `Query()`. `Query()` 会返回一个 `sql.Rows` 对象, 它保存着一个与数据库的连接, 直到 `sql.Rows` 被关闭. 由于可能存在未读数据(如, 更多的行), 所以无法使用此连接. 上面这个例子中, 连接永远也不会被再次释放. 当然垃圾回收机制最终会帮你关闭底层 `net.Conn`, 但可能耗时较长. 此外, `database/sql` 包会一直跟踪池中的连接, 并且希望你会在某个时刻释放它, 以便重复利用该连接. 因此这种反模式是耗尽资源的一个好方法(比如, 太多的连接数).
 
 ## 使用事务
 
-In Go, a transaction is essentially an object that reserves a connection to the datastore. It lets you do all of the operations we’ve seen thus far, but guarantees that they’ll be executed on the same connection.
-
 在 Go 中, 事务本质上是一个保留与数据库连接的对象. 它允许你做目前为止你接触到的所有数据库操作, 而且是使用同一个连接去执行这些操作.
 
-You begin a transaction with a call to db.Begin(), and close it with a Commit() or Rollback() method on the resulting Tx variable. Under the covers, the Tx gets a connection from the pool, and reserves it for use only with that transaction. The methods on the Tx map one-for-one to methods you can call on the database itself, such as Query() and so forth.
+事务通常以调用 `db.Begin()` 开始, 以在得到的 `Tx` 变量上调用 `Commit()` 或 `Rollback()` 结束. 在底层, `Tx` 获取池中的一个连接, 其只被用于该事务. `Tx` 的方法一对一地映射到能在数据库本身调用的方法, 如 `Query()` 等.
 
-Prepared statements that are created in a transaction are bound exclusively to that transaction. See prepared statements for more.
+在事务中创建的预处理语句专门绑定到该事务. 详见 [使用预处理语句](prepared.md).
 
-You should not mingle the use of transaction-related functions such as Begin() and Commit() with SQL statements such as BEGIN and COMMIT in your SQL code. Bad things might result:
+别把事务特有的函数 `Begin()`, `Commit()` 与 SQL 语句中的 `BEGIN`, `COMMIT` 混淆了, 否则会有不好的事情发生:
 
-- The Tx objects could remain open, reserving a connection from the pool and not returning it.
-- The state of the database could get out of sync with the state of the Go variables representing it.
-- You could believe you’re executing queries on a single connection, inside of a transaction, when in reality Go has created several connections for you invisibly and some statements aren’t part of the transaction.
+- Tx 对象始终保有一个与数据库之间的连接并且不会被其他对象使用.
+- 数据库状态可能与表示它的 Go 变量数据不同步.
+- 你可能会觉得你在单一连接上执行查询, 在一个事务内部, 实际上 Go 会创建好几个你不可见的连接, 并且某些语句不是事务的一部分.
 
-While you are working inside a transaction you should be careful not to make calls to the db variable. Make all of your calls to the Tx variable that you created with db.Begin(). db is not in a transaction, only the Tx object is. If you make further calls to db.Exec() or similar, those will happen outside the scope of your transaction, on other connections.
+当你处于事务内部时, 不要对 db 变量发起调用. 你需要使用通过 db.Begin() 产生的 Tx 变量来发起所有调用. db 不在事务内, 只有 Tx 对象是. 如果你对 db.Exec() 发起进一步地调用, 那么这些调用将会发生在事务外部或其他连接上.
 
-If you need to work with multiple statements that modify connection state, you need a Tx even if you don’t want a transaction per se. For example:
+如果你需要使用多个修改连接状态的语句, 即使你不想要事务本身, 你还是需要使用 Tx, 比如:
 
-- Creating temporary tables, which are only visible to one connection.
-- Setting variables, such as MySQL’s SET @var := somevalue syntax.
-- Changing connection options, such as character sets or timeouts.
+- 创建只对一个连接可见的临时表.
+- 设置变量, 如 MySQL 的 SET 语法, @var := somevalue.
+- 更改连接选项, 如字符集或超时时间.
 
-If you need to do any of these things, you need to bind your activity to a single connection, and the only way to do that in Go is to use a Tx.
+做以上任何一个操作, 你都需要将你的操作绑定到单个连接上, 在 Go 中能干这事的唯一方法就是使用事务对象 Tx.
