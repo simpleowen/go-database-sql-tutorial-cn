@@ -18,7 +18,7 @@ Failing to be aware of how prepared statements work can lead to a lot of extra d
 - 打开和关闭数据库会消耗资源
 - 读取所有行失败, 或者使用 rows.Close() 保留池中的连接
 - 使用 Query() 没有返回任何行将保留池中的连接
-- 不知道预处理语句如何工作将导致大量的额外数据库活动
+- 不知道预编译语句如何工作将导致大量的额外数据库活动
 
 Large uint64 Values
 
@@ -64,7 +64,7 @@ Database-Specific Syntax
 
 The database/sql API provides an abstraction of a row-oriented database, but specific databases and drivers can differ in behavior and/or syntax, such as prepared statement placeholders.
 
-database/sql API 提供了面向行数据库的一个抽象, 特定的数据库和驱动程序可能有不同的行为和/或语法, 比如预处理语句中的占位符.
+database/sql API 提供了面向行数据库的一个抽象, 特定的数据库和驱动程序可能有不同的行为和/或语法, 比如预编译语句中的占位符.
 
 Multiple Result Sets
 

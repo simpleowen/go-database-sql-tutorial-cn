@@ -13,7 +13,7 @@
 - [访问数据库](accessing.md)
 - [检索结果集](retrieving.md)
 - [修改数据和使用事务](modify.md)
-- [使用预处理语句](prepared.md)
+- [使用预编译语句](prepared.md)
 - [错误处理](errors.md)
 - [使用 NULL 值](null.md)
 - [使用未知列](unknown_columns.md)

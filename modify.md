@@ -4,7 +4,7 @@
 
 ## 修改数据的语句
 
-使用 Exec(), 最好配合预处理语句来完成诸如 `INSERT`, `UPDATE`, `DELETE` 等不需要返回行的任务. 下面的例子展示了如何插入一条语句并获取相关操作的元数据:
+使用 Exec(), 最好配合预编译语句来完成诸如 `INSERT`, `UPDATE`, `DELETE` 等不需要返回行的任务. 下面的例子展示了如何插入一条语句并获取相关操作的元数据:
 
 ```go
 stmt, err := db.Prepare("INSERT INTO users(name) VALUES(?)")
@@ -43,7 +43,7 @@ _, err := db.Query("DELETE FROM users") // BAD
 
 事务通常以调用 `db.Begin()` 开始, 以在得到的 `Tx` 变量上调用 `Commit()` 或 `Rollback()` 结束. 在底层, `Tx` 获取池中的一个连接, 其只被用于该事务. `Tx` 的方法一对一地映射到能在数据库本身调用的方法, 如 `Query()` 等.
 
-在事务中创建的预处理语句专门绑定到该事务. 详见 [使用预处理语句](prepared.md).
+在事务中创建的预编译语句专门绑定到该事务. 详见 [使用预编译语句](prepared.md).
 
 别把事务特有的函数 `Begin()`, `Commit()` 与 SQL 语句中的 `BEGIN`, `COMMIT` 混淆了, 否则会有不好的事情发生:
 
